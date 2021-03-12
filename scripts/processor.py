@@ -4,6 +4,7 @@ import zipfile
 
 import luigi
 import ujson
+from luigi.format import UTF8
 
 
 class SplitEvents(luigi.Task):
@@ -22,7 +23,7 @@ class SplitEvents(luigi.Task):
         with zipfile.ZipFile(self.input().path, 'r') as zip_ref:
             for file in zip_ref.infolist():
                 with zip_ref.open(file.filename, 'r') as fp:
-                    data = ujson.load(fp)
+                    data = ujson.loads(fp.read().decode('unicode-escape'))
 
                 for match_id, events in itertools.groupby(data, key=lambda event: event['matchId']):
                     with luigi.LocalTarget(f"{self.output_dir}/{match_id}.json").open('w') as fp:
@@ -50,7 +51,7 @@ class SplitMatches(luigi.Task):
         with zipfile.ZipFile(self.input().path, 'r') as zip_ref:
             for file in zip_ref.infolist():
                 with zip_ref.open(file.filename, 'r') as fp:
-                    data = ujson.load(fp)
+                    data = ujson.loads(fp.read().decode('unicode-escape'))
 
                 for match in data:
                     match_id = match['wyId']
@@ -73,8 +74,8 @@ class WriteOutput(luigi.Task):
 
     def input(self):
         return dict(
-            teams=luigi.LocalTarget(self.teams_filename),
-            players=luigi.LocalTarget(self.players_filename),
+            teams=luigi.LocalTarget(self.teams_filename, format=UTF8),
+            players=luigi.LocalTarget(self.players_filename, format=UTF8),
             match=luigi.LocalTarget(self.match_filename),
             events=luigi.LocalTarget(self.events_filename)
         )
@@ -150,7 +151,7 @@ class WriteIndex(luigi.Task):
     output_filename = luigi.Parameter()
 
     def output(self):
-        return luigi.LocalTarget(self.output_filename)
+        return luigi.LocalTarget(self.output_filename, format=UTF8)
 
     def input(self):
         return luigi.LocalTarget(self.matches_filename)
@@ -201,15 +202,19 @@ class KloppyProcessor(luigi.Task):
         complete = event_files.symmetric_difference(match_files)
         assert not complete, "Missing some data"
 
-        for filename in match_files:
-            yield WriteOutput(
+        # Launch new tasks for each output file
+        yield [
+            WriteOutput(
                 teams_filename=f"{self.input_dir}/teams.json",
                 players_filename=f"{self.input_dir}/players.json",
                 match_filename=f"{self.tmp_dir}/matches/{filename}",
                 events_filename=f"{self.tmp_dir}/events/{filename}",
                 output_file=f"{self.output_dir}/files/{filename}"
             )
+            for filename in match_files
+        ]
 
+        # Launch last task to write the index file
         yield WriteIndex(
             matches_filename=self.input()['matches'].path,
             matches_input_dir=f"{self.tmp_dir}/matches",
@@ -224,4 +229,4 @@ if __name__ == "__main__":
         output_dir="../processed"
     )
 
-    luigi.build([task], local_scheduler=True)
+    luigi.build([task], local_scheduler=True, workers=8)
