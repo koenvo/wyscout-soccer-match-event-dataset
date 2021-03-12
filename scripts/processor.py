@@ -54,6 +54,7 @@ class SplitMatches(luigi.Task):
 
                 for match in data:
                     match_id = match['wyId']
+                    match['sourceFile'] = file.filename
                     with luigi.LocalTarget(f"{self.output_dir}/{match_id}.json").open('w') as fp:
                         ujson.dump(match, fp)
 
@@ -143,6 +144,36 @@ class WriteOutput(luigi.Task):
             json.dump(output, fp)
 
 
+class WriteIndex(luigi.Task):
+    matches_filename = luigi.Parameter()
+    matches_input_dir = luigi.Parameter()
+    output_filename = luigi.Parameter()
+
+    def output(self):
+        return luigi.LocalTarget(self.output_filename)
+
+    def input(self):
+        return luigi.LocalTarget(self.matches_filename)
+
+    def run(self):
+        with self.input().open('r') as fp:
+            match_files = sorted(ujson.load(fp))
+
+        output_data = """
+| ID | Label | Date | Source file |
+|----|-------|------|-------------|
+"""
+
+        for filename in match_files:
+            with luigi.LocalTarget(f"{self.matches_input_dir}/{filename}").open('r') as fp:
+                match_data = ujson.load(fp)
+
+                output_data += f"|[{match_data['wyId']}](files/{match_data['wyId']}.json)|{match_data['label']}|{match_data['date']}|{match_data['sourceFile']}|\n"
+
+        with self.output().open('w') as fp:
+            fp.write(output_data)
+
+
 class KloppyProcessor(luigi.Task):
     input_dir = luigi.Parameter()
     tmp_dir = luigi.Parameter()
@@ -176,8 +207,14 @@ class KloppyProcessor(luigi.Task):
                 players_filename=f"{self.input_dir}/players.json",
                 match_filename=f"{self.tmp_dir}/matches/{filename}",
                 events_filename=f"{self.tmp_dir}/events/{filename}",
-                output_file=f"{self.output_dir}/{filename}"
+                output_file=f"{self.output_dir}/files/{filename}"
             )
+
+        yield WriteIndex(
+            matches_filename=self.input()['matches'].path,
+            matches_input_dir=f"{self.tmp_dir}/matches",
+            output_filename=f"{self.output_dir}/README.md"
+        )
 
 
 if __name__ == "__main__":
