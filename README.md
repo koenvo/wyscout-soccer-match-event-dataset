@@ -13,6 +13,7 @@ The dataset contains the following competitions:
 | German Bundesliga | 306 | 2017/18
 | Men’s FIFA World Cup | 64 | 2018
 | Men’s UEFA Euro | 51 | 2016
+
 Andrew Rowlinson (2020): [FOOTBALL SHOT QUALITY](https://aaltodoc.aalto.fi/bitstream/handle/123456789/45953/master_Rowlinson_Andrew_2020.pdf?sequence=1&isAllowed=y)
 
 ## Usage
