@@ -18,14 +18,14 @@ Andrew Rowlinson (2020): [FOOTBALL SHOT QUALITY](https://aaltodoc.aalto.fi/bitst
 
 ## Usage
 
-The original files are processed to the regular JSON form. This makes it possible to load the data using kloppy. Since kloppy 1.5.2 it's possible to access this dataset directly using the kloppy `datasets` api.
+The original files are processed to the regular JSON form. This makes it possible to load the data using kloppy. Since kloppy >=1.5.2 it's possible to access this dataset directly using the kloppy `datasets` api.
 
 You can find all available matches in the [index](processed/README.md) in the repository.
 
 
 ### Load using datasets api
 
-Note: make sure you have version 1.5.2 of kloppy.
+Note: make sure you have version >=1.5.2 of kloppy.
 
 You can load the default match (2499841 - Huddersfield Town - Manchester City) using the dataset api:
 
