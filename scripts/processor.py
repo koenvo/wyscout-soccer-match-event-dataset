@@ -86,14 +86,15 @@ class WriteOutput(luigi.Task):
     def run(self):
         with self.input()['teams'].open('r') as fp:
             teams = {
-                team['wyId']: team
+                team['wyId']: dict(
+                    team=team
+                )
                 for team in ujson.load(fp)
             }
 
         with self.input()['players'].open('r') as fp:
             players = {
                 player['wyId']: dict(
-                    playerId=player['wyId'],
                     player=player
                 )
                 for player in ujson.load(fp)
@@ -226,7 +227,7 @@ if __name__ == "__main__":
     task = KloppyProcessor(
         input_dir="../raw_data",
         tmp_dir="../tmp",
-        output_dir="../processed"
+        output_dir="../processed-v2"
     )
 
     luigi.build([task], local_scheduler=True, workers=8)

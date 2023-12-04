@@ -63,6 +63,15 @@ dataset = load_wyscout_event_data("1694390.json")
 | Matches | Zipped JSON | https://ndownloader.figshare.com/files/14464622 |
 | Events | Zipped JSON | https://ndownloader.figshare.com/files/14464685 |  
 
+## Versions
+
+### 1.0 
+
+Compatible with kloppy version < 3.14
+
+### 2.0
+
+Compatible with kloppy version >= 3.14
 
 ## References
 
